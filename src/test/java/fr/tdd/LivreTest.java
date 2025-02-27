@@ -1,121 +1,100 @@
 package fr.tdd;
 
-import org.junit.jupiter.api.Test;
-import static org.mockito.Mockito.*;
 import fr.tdd.model.Livre;
-import jakarta.persistence.EntityManager;
+import fr.tdd.repository.LivreRepository;
+import fr.tdd.service.LivreService;
+import fr.tdd.exception.LivreNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import fr.tdd.api.LivreAPI;
-import fr.tdd.model.Format;
-
+@ExtendWith(MockitoExtension.class)
 public class LivreTest {
 
     @Mock
-    private EntityManager entityManager;
+    private LivreRepository livreRepository;
 
     @InjectMocks
-    private LivreAPI livreApi;
+    private LivreService livreService;
+
+    private Livre livre;
 
     @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
-    @Test
-    public void testCreateLivre() {
-        Livre livre = new Livre();
-        livre.setIsbn("123456789");
-        livre.setTitre("Test Title");
-        livre.setAuteur("Test Author");
-        livre.setEditeur("Test Publisher");
-        livre.setFormat(Format.Poche);
+    void setUp() {
+        livre = new Livre();
+        livre.setIsbn("123456");
+        livre.setTitre("TDD en Java");
+        livre.setAuteur("Martin Fowler");
+        livre.setEditeur("O'Reilly");
         livre.setDisponible(true);
-
-        livreApi.createLivre(livre);
-
-        verify(entityManager, times(1)).persist(livre);
     }
 
     @Test
-    public void testReadLivre() {
-        String isbn = "123456789";
-        Livre livre = new Livre();
-        livre.setIsbn(isbn);
+    void testCreerLivre() {
+        // Given
+        when(livreRepository.save(livre)).thenReturn(livre);
+        
+        // When
+        Livre result = livreService.creerLivre(livre);
 
-        when(entityManager.find(Livre.class, isbn)).thenReturn(livre);
-
-        Livre foundLivre = livreApi.readLivre(isbn);
-
-        verify(entityManager, times(1)).find(Livre.class, isbn);
-        assertEquals(livre, foundLivre);
+        // Then
+        assertNotNull(result);
+        assertEquals("123456", result.getIsbn());
+        verify(livreRepository, times(1)).save(livre);
     }
 
     @Test
-    public void testUpdateLivre() {
-        Livre livre = new Livre();
-        livre.setIsbn("123456789");
-        livre.setTitre("Updated Title");
+    void testObtenirLivre_Existe() {
+        // Given
+        when(livreRepository.findById("123456")).thenReturn(Optional.of(livre));
 
-        livreApi.updateLivre(livre);
+        // When
+        Livre result = livreService.obtenirLivre("123456");
 
-        verify(entityManager, times(1)).merge(livre);
+        // Then
+        assertNotNull(result);
+        assertEquals("TDD en Java", result.getTitre());
     }
 
     @Test
-    public void testDeleteLivre() {
-        String isbn = "123456789";
-        Livre livre = new Livre();
-        livre.setIsbn(isbn);
-
-        when(entityManager.find(Livre.class, isbn)).thenReturn(livre);
-
-        livreApi.deleteLivre(isbn);
-
-        verify(entityManager, times(1)).remove(livre);
+    void testObtenirLivre_NonExistant() {
+        when(livreRepository.findById("999999")).thenReturn(Optional.empty());
+        assertThrows(LivreNotFoundException.class, () -> livreService.obtenirLivre("999999"));
     }
 
     @Test
-    public void testCreateLivreWithNull() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            livreApi.createLivre(null);
-        });
+    void testMettreAJourLivre() {
+        when(livreRepository.findById("123456")).thenReturn(Optional.of(livre));
+        when(livreRepository.save(any(Livre.class))).thenReturn(livre);
+
+        Livre livreMiseAJour = new Livre();
+        livreMiseAJour.setIsbn("123456");
+        livreMiseAJour.setTitre("TDD en Java - 2ème Édition");
+
+        Livre result = livreService.mettreAJourLivre("123456", livreMiseAJour);
+        assertEquals("TDD en Java - 2ème Édition", result.getTitre());
     }
 
     @Test
-    public void testReadLivreNotFound() {
-        String isbn = "123456789";
+    void testSupprimerLivre_Existe() {
+        when(livreRepository.findById("123456")).thenReturn(Optional.of(livre));
+        doNothing().when(livreRepository).delete(livre);
 
-        when(entityManager.find(Livre.class, isbn)).thenReturn(null);
-
-        Livre foundLivre = livreApi.readLivre(isbn);
-
-        verify(entityManager, times(1)).find(Livre.class, isbn);
-        assertNull(foundLivre);
+        assertDoesNotThrow(() -> livreService.supprimerLivre("123456"));
+        verify(livreRepository, times(1)).delete(livre);
     }
 
     @Test
-    public void testUpdateLivreWithNull() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            livreApi.updateLivre(null);
-        });
-    }
-
-    @Test
-    public void testDeleteLivreNotFound() {
-        String isbn = "123456789";
-
-        when(entityManager.find(Livre.class, isbn)).thenReturn(null);
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            livreApi.deleteLivre(isbn);
-        });
-
-        verify(entityManager, times(1)).find(Livre.class, isbn);
-        verify(entityManager, times(0)).remove(any(Livre.class));
+    void testSupprimerLivre_NonExistant() {
+        when(livreRepository.findById("999999")).thenReturn(Optional.empty());
+        assertThrows(LivreNotFoundException.class, () -> livreService.supprimerLivre("999999"));
     }
 }
