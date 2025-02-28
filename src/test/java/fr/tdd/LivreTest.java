@@ -152,8 +152,7 @@ public class LivreTest {
 
     @Test
     void testRechercherParIsbn_Existe() {
-        when(livreRepository.findByIsbn("2010008995")).thenReturn(Optional.of(livreExistant));
-
+        when(livreRepository.findByIsbn("2010008995")).thenReturn(livreExistant);
         Livre result = livreService.rechercherParIsbn("2010008995");
 
         assertNotNull(result);
@@ -163,7 +162,7 @@ public class LivreTest {
 
     @Test
     void testRechercherParIsbn_NonExistant() {
-        when(livreRepository.findByIsbn("999999")).thenReturn(Optional.empty());
+        when(livreRepository.findByIsbn("999999")).thenThrow(new LivreNotFoundException("Livre not found"));
 
         assertThrows(LivreNotFoundException.class, () -> livreService.rechercherParIsbn("999999"));
         verify(livreRepository, times(1)).findByIsbn("999999");

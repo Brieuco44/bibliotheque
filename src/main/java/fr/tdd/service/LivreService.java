@@ -1,5 +1,7 @@
 package fr.tdd.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import fr.tdd.ISBNValidator;
@@ -59,7 +61,7 @@ public class LivreService {
 
         // Vérifier que le livre existe
         if (!livreRepository.existsById(isbn)) {
-            throw new LivreDejaExistantException("Ce livre n'existe pas.");
+            throw new LivreNotFoundException("Ce livre n'existe pas.");
         }
 
         Livre livre = obtenirLivre(isbn);
@@ -77,6 +79,30 @@ public class LivreService {
 
     private boolean informationsManquantes(Livre livre) {
         return livre.getTitre() == null || livre.getAuteur() == null || livre.getEditeur() == null;
+    }
+
+    public Livre rechercherParIsbn(String isbn) {
+        try {
+            return livreRepository.findByIsbn(isbn);
+        } catch (Exception e) {
+            throw new LivreNotFoundException("Ce livre n'existe pas.");
+        }
+    }
+
+    public List<Livre> rechercherParTitre(String titre) {
+        try {
+            return livreRepository.findByTitre(titre);
+        } catch (Exception e) {
+            throw new LivreNotFoundException("Ce livre n'existe pas.");
+        }
+    }
+
+    public List<Livre> rechercherParAuteur(String auteur) {
+        try {
+            return livreRepository.findByAuteur(auteur);
+        } catch (Exception e) {
+            throw new LivreNotFoundException("Ce livre n'existe pas.");
+        }
     }
 
 }
