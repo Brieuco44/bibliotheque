@@ -2,6 +2,9 @@ package fr.tdd.service;
 
 import org.springframework.stereotype.Service;
 
+import fr.tdd.ISBNValidator;
+import fr.tdd.exception.IsbnInvalideException;
+import fr.tdd.exception.LivreDejaExistantException;
 import fr.tdd.exception.LivreNotFoundException;
 import fr.tdd.model.Livre;
 import fr.tdd.repository.LivreRepository;
@@ -9,23 +12,56 @@ import fr.tdd.repository.LivreRepository;
 @Service
 public class LivreService {
 
-
     private final LivreRepository livreRepository;
+    private final WebServiceLivre webServiceLivre;
 
-    public LivreService(LivreRepository livreRepository) {
+    public LivreService(LivreRepository livreRepository, WebServiceLivre webServiceLivre) {
         this.livreRepository = livreRepository;
+        this.webServiceLivre = webServiceLivre;
     }
 
     public Livre creerLivre(Livre livre) {
+        // Vérifier que l'ISBN est valide
+        ISBNValidator validator = new ISBNValidator();
+        if (!validator.validateISBN(livre.getIsbn())) {
+            throw new IsbnInvalideException("ISBN invalide : " + livre.getIsbn());
+        }
+
+        // Vérifier que le livre n'existe pas déjà
+        if (livreRepository.existsById(livre.getIsbn())) {
+            throw new LivreDejaExistantException("Un livre avec cet ISBN existe déjà.");
+        }
+
+        // Récupérer les informations manquantes
+        if (informationsManquantes(livre)) {
+            Livre livreComplet = webServiceLivre.recupererInformations(livre.getIsbn());
+            if (livreComplet == null) {
+                throw new LivreNotFoundException("Impossible de récupérer les informations du livre.");
+            }
+            return livreRepository.save(livreComplet);
+        }
+
         return livreRepository.save(livre);
     }
 
     public Livre obtenirLivre(String isbn) {
         return livreRepository.findById(isbn)
-                .orElseThrow(() -> new LivreNotFoundException());
+                .orElseThrow(() -> new LivreNotFoundException("Livre non trouvé avec l'ISBN : " + isbn));
     }
 
     public Livre mettreAJourLivre(String isbn, Livre livreDetails) {
+
+        // Vérifier que l'ISBN est valide
+        ISBNValidator validator = new ISBNValidator();
+        if (!validator.validateISBN(isbn)) {
+            throw new IsbnInvalideException("ISBN invalide : " + isbn);
+        }
+
+        // Vérifier que le livre existe
+        if (!livreRepository.existsById(isbn)) {
+            throw new LivreDejaExistantException("Ce livre n'existe pas.");
+        }
+
         Livre livre = obtenirLivre(isbn);
         livre.setTitre(livreDetails.getTitre());
         livre.setAuteur(livreDetails.getAuteur());
@@ -37,6 +73,10 @@ public class LivreService {
     public void supprimerLivre(String isbn) {
         Livre livre = obtenirLivre(isbn);
         livreRepository.delete(livre);
+    }
+
+    private boolean informationsManquantes(Livre livre) {
+        return livre.getTitre() == null || livre.getAuteur() == null || livre.getEditeur() == null;
     }
 
 }

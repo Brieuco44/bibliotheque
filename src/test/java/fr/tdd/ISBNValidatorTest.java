@@ -3,6 +3,8 @@ package fr.tdd;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
+import fr.tdd.exception.IsbnInvalideException;
+
 public class ISBNValidatorTest {
 
     @Test
@@ -24,14 +26,14 @@ public class ISBNValidatorTest {
     @Test
     public void invalidLengthShouldThrowsException() {
         ISBNValidator validator = new ISBNValidator();
-        assertThrows(NumberFormatException.class, () -> validator.validateISBN("123456789"));
-        assertThrows(NumberFormatException.class, () -> validator.validateISBN("12345678912"));
+        assertThrows(IsbnInvalideException.class, () -> validator.validateISBN("123456789"));
+        assertThrows(IsbnInvalideException.class, () -> validator.validateISBN("12345678912"));
     }
 
     @Test
     public void nonNumericISBNThrowsException() {
         ISBNValidator validator = new ISBNValidator();
-        assertThrows(NumberFormatException.class, () -> validator.validateISBN("helloworld"));
+        assertThrows(IsbnInvalideException.class, () -> validator.validateISBN("helloworld"));
     }
 
     @Test

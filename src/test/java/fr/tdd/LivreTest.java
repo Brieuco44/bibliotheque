@@ -8,6 +8,8 @@ import fr.tdd.service.WebServiceLivre;
 import fr.tdd.exception.IsbnInvalideException;
 import fr.tdd.exception.LivreDejaExistantException;
 import fr.tdd.exception.LivreNotFoundException;
+
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +17,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,78 +37,78 @@ public class LivreTest {
     @InjectMocks
     private LivreService livreService;
 
-    private Livre livre;
+    private Livre livreExistant;
 
     @BeforeEach
     void setUp() {
-        livre = new Livre();
-        livre.setIsbn("123456");
-        livre.setTitre("TDD en Java");
-        livre.setAuteur("Martin Fowler");
-        livre.setEditeur("O'Reilly");
-        livre.setFormat(Format.Poche);
-        livre.setDisponible(true);
+        livreExistant = new Livre();
+        livreExistant.setIsbn("2010008995");
+        livreExistant.setTitre("TDD en Java");
+        livreExistant.setAuteur("Martin Fowler");
+        livreExistant.setEditeur("O'Reilly");
+        livreExistant.setFormat(Format.Poche);
+        livreExistant.setDisponible(true);
     }
 
     @Test
     void testCreerLivre() {
         // Given
-        when(livreRepository.save(livre)).thenReturn(livre);
+        when(livreRepository.save(livreExistant)).thenReturn(livreExistant);
         
         // When
-        Livre result = livreService.creerLivre(livre);
+        Livre result = livreService.creerLivre(livreExistant);
 
         // Then
         assertNotNull(result);
-        assertEquals("123456", result.getIsbn());
-        verify(livreRepository, times(1)).save(livre);
+        assertEquals("2010008995", result.getIsbn());
+        verify(livreRepository, times(1)).save(livreExistant);
     }
 
     @Test
     void testCreerLivre_IsbnInvalide() {
-        livre.setIsbn("123"); // ISBN invalide
+        livreExistant.setIsbn("123"); // ISBN invalide
 
-        assertThrows(IsbnInvalideException.class, () -> livreService.creerLivre(livre));
+        assertThrows(IsbnInvalideException.class, () -> livreService.creerLivre(livreExistant));
         verify(livreRepository, never()).save(any());
     }
 
     @Test
     void testCreerLivre_DejaExistant() {
-        when(livreRepository.existsById(livre.getIsbn())).thenReturn(true);
+        when(livreRepository.existsById(livreExistant.getIsbn())).thenReturn(true);
 
-        assertThrows(LivreDejaExistantException.class, () -> livreService.creerLivre(livre));
+        assertThrows(LivreDejaExistantException.class, () -> livreService.creerLivre(livreExistant));
         verify(livreRepository, never()).save(any());
     }
 
     @Test
     void testCreerLivre_InformationsManquantesRecuperees() {
-        livre.setTitre(null); // Information manquante
+        livreExistant.setTitre(null); // Information manquante
 
         Livre livreComplet = new Livre();
-        livreComplet.setIsbn("9783161484100");
+        livreComplet.setIsbn("2010008995");
         livreComplet.setTitre("TDD en Java");
         livreComplet.setAuteur("Martin Fowler");
         livreComplet.setEditeur("O'Reilly");
         livreComplet.setDisponible(true);
 
-        when(webServiceLivre.recupererInformations("9783161484100")).thenReturn(livreComplet);
+        when(webServiceLivre.recupererInformations("2010008995")).thenReturn(livreComplet);
         when(livreRepository.save(any())).thenReturn(livreComplet);
 
-        Livre result = livreService.creerLivre(livre);
+        Livre result = livreService.creerLivre(livreExistant);
 
         assertNotNull(result);
         assertEquals("TDD en Java", result.getTitre());
-        verify(webServiceLivre, times(1)).recupererInformations("9783161484100");
+        verify(webServiceLivre, times(1)).recupererInformations("2010008995");
         verify(livreRepository, times(1)).save(livreComplet);
     }
 
     @Test
     void testObtenirLivre_Existe() {
         // Given
-        when(livreRepository.findById("123456")).thenReturn(Optional.of(livre));
+        when(livreRepository.findById("2210765528")).thenReturn(Optional.of(livreExistant));
 
         // When
-        Livre result = livreService.obtenirLivre("123456");
+        Livre result = livreService.obtenirLivre("2210765528");
 
         // Then
         assertNotNull(result);
@@ -119,29 +123,95 @@ public class LivreTest {
 
     @Test
     void testMettreAJourLivre() {
-        when(livreRepository.findById("123456")).thenReturn(Optional.of(livre));
-        when(livreRepository.save(any(Livre.class))).thenReturn(livre);
+        when(livreRepository.save(any(Livre.class))).thenReturn(livreExistant);
+        when(livreRepository.existsById("2010008995")).thenReturn(true);
+        when(livreRepository.findById("2010008995")).thenReturn(Optional.of(livreExistant));
 
         Livre livreMiseAJour = new Livre();
-        livreMiseAJour.setIsbn("123456");
+        livreMiseAJour.setIsbn("2010008995");
         livreMiseAJour.setTitre("TDD en Java - 2ème Édition");
 
-        Livre result = livreService.mettreAJourLivre("123456", livreMiseAJour);
+        Livre result = livreService.mettreAJourLivre("2010008995", livreMiseAJour);
         assertEquals("TDD en Java - 2ème Édition", result.getTitre());
     }
 
     @Test
     void testSupprimerLivre_Existe() {
-        when(livreRepository.findById("123456")).thenReturn(Optional.of(livre));
-        doNothing().when(livreRepository).delete(livre);
+        when(livreRepository.findById("2010008995")).thenReturn(Optional.of(livreExistant));
+        doNothing().when(livreRepository).delete(livreExistant);
 
-        assertDoesNotThrow(() -> livreService.supprimerLivre("123456"));
-        verify(livreRepository, times(1)).delete(livre);
+        assertDoesNotThrow(() -> livreService.supprimerLivre("2010008995"));
+        verify(livreRepository, times(1)).delete(livreExistant);
     }
 
     @Test
     void testSupprimerLivre_NonExistant() {
         when(livreRepository.findById("999999")).thenReturn(Optional.empty());
         assertThrows(LivreNotFoundException.class, () -> livreService.supprimerLivre("999999"));
+    }
+
+    @Test
+    void testRechercherParIsbn_Existe() {
+        when(livreRepository.findByIsbn("2010008995")).thenReturn(Optional.of(livreExistant));
+
+        Livre result = livreService.rechercherParIsbn("2010008995");
+
+        assertNotNull(result);
+        assertEquals("2010008995", result.getIsbn());
+        verify(livreRepository, times(1)).findByIsbn("2010008995");
+    }
+
+    @Test
+    void testRechercherParIsbn_NonExistant() {
+        when(livreRepository.findByIsbn("999999")).thenReturn(Optional.empty());
+
+        assertThrows(LivreNotFoundException.class, () -> livreService.rechercherParIsbn("999999"));
+        verify(livreRepository, times(1)).findByIsbn("999999");
+    }
+
+    @Test
+    void testRechercherParAuteur_Existe() {
+        when(livreRepository.findByAuteur("Martin Fowler")).thenReturn(List.of(livreExistant));
+
+        List<Livre> result = livreService.rechercherParAuteur("Martin Fowler");
+
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals("Martin Fowler", result.get(0).getAuteur());
+        verify(livreRepository, times(1)).findByAuteur("Martin Fowler");
+    }
+
+    @Test
+    void testRechercherParAuteur_NonExistant() {
+        when(livreRepository.findByAuteur("Unknown Author")).thenReturn(Collections.emptyList());
+
+        List<Livre> result = livreService.rechercherParAuteur("Unknown Author");
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(livreRepository, times(1)).findByAuteur("Unknown Author");
+    }
+
+    @Test
+    void testRechercherParTitre_Existe() {
+        when(livreRepository.findByTitre("TDD en Java")).thenReturn(List.of(livreExistant));
+
+        List<Livre> result = livreService.rechercherParTitre("TDD en Java");
+
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals("TDD en Java", result.get(0).getTitre());
+        verify(livreRepository, times(1)).findByTitre("TDD en Java");
+    }
+
+    @Test
+    void testRechercherParTitre_NonExistant() {
+        when(livreRepository.findByTitre("Unknown Title")).thenReturn(Collections.emptyList());
+
+        List<Livre> result = livreService.rechercherParTitre("Unknown Title");
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(livreRepository, times(1)).findByTitre("Unknown Title");
     }
 }
