@@ -1,6 +1,7 @@
 package fr.tdd.model;
 
 import java.sql.Date;
+import java.time.LocalDateTime;
 
 import org.hibernate.annotations.UuidGenerator;
 
@@ -28,7 +29,7 @@ public class Adherent {
     private String prenom;
 
     @Column(name = "date_naissance")
-    private Date dateNaissance;
+    private LocalDateTime dateNaissance;
 
     @Column(name = "civilite")
     private Civilite civilite;

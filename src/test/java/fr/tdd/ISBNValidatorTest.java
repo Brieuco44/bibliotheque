@@ -8,7 +8,7 @@ import fr.tdd.exception.IsbnInvalideException;
 public class ISBNValidatorTest {
 
     @Test
-    public void checkValid10CharsISBNCode() {
+    void checkValid10CharsISBNCode() {
         ISBNValidator validator = new ISBNValidator();
         boolean result = validator.validateISBN("2210765528");
         assertTrue(result, "first assertion");
@@ -17,34 +17,34 @@ public class ISBNValidatorTest {
     }
 
     @Test
-    public void checkInvalid10CharsISBNCode() {
+    void checkInvalid10CharsISBNCode() {
         ISBNValidator validator = new ISBNValidator();
         boolean result = validator.validateISBN("2210765525");
         assertFalse(result);
     }
 
     @Test
-    public void invalidLengthShouldThrowsException() {
+    void invalidLengthShouldThrowsException() {
         ISBNValidator validator = new ISBNValidator();
         assertThrows(IsbnInvalideException.class, () -> validator.validateISBN("123456789"));
         assertThrows(IsbnInvalideException.class, () -> validator.validateISBN("12345678912"));
     }
 
     @Test
-    public void nonNumericISBNThrowsException() {
+    void nonNumericISBNThrowsException() {
         ISBNValidator validator = new ISBNValidator();
         assertThrows(IsbnInvalideException.class, () -> validator.validateISBN("helloworld"));
     }
 
     @Test
-    public void checkISBNEndingWithAnXIsValid() {
+    void checkISBNEndingWithAnXIsValid() {
         ISBNValidator validator = new ISBNValidator();
         boolean result = validator.validateISBN("140274577X");
         assertTrue(result);
     }
 
     @Test
-    public void checkValid13CharsISBNCode() {
+    void checkValid13CharsISBNCode() {
         ISBNValidator validator = new ISBNValidator();
         boolean result = validator.validateISBN("9781402745775");
         assertTrue(result);
