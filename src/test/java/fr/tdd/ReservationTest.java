@@ -19,12 +19,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import fr.tdd.exception.QuotaLivreDepasseException;
+import fr.tdd.exception.AdherentNotFoundException;
 import fr.tdd.exception.LivreIndisponibleException;
 import fr.tdd.model.Adherent;
 import fr.tdd.model.Civilite;
 import fr.tdd.model.Format;
 import fr.tdd.model.Livre;
 import fr.tdd.model.Reservation;
+import fr.tdd.repository.AdherentRepository;
 import fr.tdd.repository.ReservationRepository;
 import fr.tdd.service.ReservationService;
 
@@ -33,6 +35,9 @@ public class ReservationTest {
 
     @Mock
     private ReservationRepository reservationRepository;
+
+    @Mock
+    private AdherentRepository adherentRepository;
 
     @InjectMocks
     private ReservationService reservationService;
@@ -68,7 +73,8 @@ public class ReservationTest {
     void testCreerReservation() {
         // Given
         when(reservationRepository.save(any(Reservation.class))).thenReturn(reservationExistant);
-        
+        when(adherentRepository.existsById(reservationExistant.getAdherent().getCode())).thenReturn(true);
+        when(reservationRepository.countByAdherentCodeAndDateFinIsNull(reservationExistant.getAdherent().getCode())).thenReturn(0);
         // When
         Reservation result = reservationService.creerReservation(reservationExistant);
 
@@ -82,7 +88,6 @@ public class ReservationTest {
     void testCreerReservationLivreNonDisponible() {
         // Given
         livreExistant.setDisponible(false);
-        when(reservationRepository.save(any(Reservation.class))).thenReturn(reservationExistant);
         
         // Then
         assertThrows(LivreIndisponibleException.class, () -> reservationService.creerReservation(reservationExistant));
@@ -92,20 +97,19 @@ public class ReservationTest {
     @Test
     void testCreerReservationAdherentInconnu() {
         // Given
-        when(reservationRepository.save(any(Reservation.class))).thenReturn(reservationExistant);
-        when(reservationRepository.existsById(reservationExistant.getAdherent().getCode())).thenReturn(false);
-        reservationExistant.setAdherent(null);
+        when(adherentRepository.existsById(reservationExistant.getAdherent().getCode())).thenReturn(false);
+        when(reservationRepository.countByAdherentCodeAndDateFinIsNull(reservationExistant.getAdherent().getCode())).thenReturn(1);
+        reservationExistant.getAdherent().setCode("123456");
         
         // Then
-        assertThrows(QuotaLivreDepasseException.class, () -> reservationService.creerReservation(reservationExistant));
+        assertThrows(AdherentNotFoundException.class, () -> reservationService.creerReservation(reservationExistant));
         verify( reservationRepository, times(0)).save(reservationExistant);
     }
 
     @Test
     void testCreerReservationQuotaDepasse() {
         // Given
-        when(reservationRepository.save(any(Reservation.class))).thenReturn(reservationExistant);
-        when(reservationRepository.countByAdherentCode(reservationExistant.getAdherent().getCode())).thenReturn(3);
+        when(reservationRepository.countByAdherentCodeAndDateFinIsNull(reservationExistant.getAdherent().getCode())).thenReturn(3);
         
         // Then
         assertThrows(QuotaLivreDepasseException.class, () -> reservationService.creerReservation(reservationExistant));

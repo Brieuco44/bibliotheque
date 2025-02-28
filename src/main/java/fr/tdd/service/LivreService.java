@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import fr.tdd.ISBNValidator;
-import fr.tdd.exception.IsbnInvalideException;
 import fr.tdd.exception.LivreDejaExistantException;
 import fr.tdd.exception.LivreNotFoundException;
 import fr.tdd.model.Livre;
