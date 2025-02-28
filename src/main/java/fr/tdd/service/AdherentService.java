@@ -2,7 +2,7 @@ package fr.tdd.service;
 
 import org.springframework.stereotype.Service;
 
-import fr.tdd.exception.AdherentNotFoundException;
+import fr.tdd.exception.QuotaLivreDepasseException;
 import fr.tdd.model.Adherent;
 import fr.tdd.repository.AdherentRepository;
 
@@ -18,7 +18,7 @@ public class AdherentService {
         try {
             return adherentRepository.findById(id).get();
         } catch (Exception e) {
-            throw new AdherentNotFoundException("Adherent not found");
+            throw new QuotaLivreDepasseException("Adherent not found");
         }
     }
 
@@ -26,7 +26,7 @@ public class AdherentService {
         try {
             return adherentRepository.save(adherent);
         } catch (Exception e) {
-            throw new AdherentNotFoundException("Adherent already exists");
+            throw new QuotaLivreDepasseException("Adherent already exists");
         }
     }
 
@@ -39,7 +39,7 @@ public class AdherentService {
             adherent.setCivilite(adherentDetails.getCivilite());
             return adherentRepository.save(adherent);
         } catch (Exception e) {
-            throw new AdherentNotFoundException("Adherent not found");
+            throw new QuotaLivreDepasseException("Adherent not found");
         }
     }
 
@@ -47,7 +47,7 @@ public class AdherentService {
         try {
             adherentRepository.delete(adherent);
         } catch (Exception e) {
-            throw new AdherentNotFoundException("Adherent not found");
+            throw new QuotaLivreDepasseException("Adherent not found");
         }
     }
 }

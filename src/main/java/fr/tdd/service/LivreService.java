@@ -25,10 +25,7 @@ public class LivreService {
     public Livre creerLivre(Livre livre) {
         // Vérifier que l'ISBN est valide
         ISBNValidator validator = new ISBNValidator();
-        if (!validator.validateISBN(livre.getIsbn())) {
-            throw new IsbnInvalideException("ISBN invalide : " + livre.getIsbn());
-        }
-
+        validator.validateISBN(livre.getIsbn());
         // Vérifier que le livre n'existe pas déjà
         if (livreRepository.existsById(livre.getIsbn())) {
             throw new LivreDejaExistantException("Un livre avec cet ISBN existe déjà.");
@@ -55,9 +52,7 @@ public class LivreService {
 
         // Vérifier que l'ISBN est valide
         ISBNValidator validator = new ISBNValidator();
-        if (!validator.validateISBN(isbn)) {
-            throw new IsbnInvalideException("ISBN invalide : " + isbn);
-        }
+        validator.validateISBN(isbn);
 
         // Vérifier que le livre existe
         if (!livreRepository.existsById(isbn)) {
@@ -92,7 +87,7 @@ public class LivreService {
     public List<Livre> rechercherParTitre(String titre) {
         try {
             return livreRepository.findByTitre(titre);
-        } catch (Exception e) {
+        } catch (LivreNotFoundException e) {
             throw new LivreNotFoundException("Ce livre n'existe pas.");
         }
     }
@@ -100,7 +95,7 @@ public class LivreService {
     public List<Livre> rechercherParAuteur(String auteur) {
         try {
             return livreRepository.findByAuteur(auteur);
-        } catch (Exception e) {
+        } catch (LivreNotFoundException e) {
             throw new LivreNotFoundException("Ce livre n'existe pas.");
         }
     }

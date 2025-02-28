@@ -9,7 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import fr.tdd.exception.AdherentNotFoundException;
+import fr.tdd.exception.QuotaLivreDepasseException;
 import fr.tdd.model.Adherent;
 import fr.tdd.model.Civilite;
 import fr.tdd.model.Livre;
@@ -67,8 +67,8 @@ public class AdherentTest {
     @Test
     void testCreateAdherentWithNullCode() {
         adherentExistant.setCode(null);
-        when(adherentService.createAdherent(any(Adherent.class))).thenThrow(new AdherentNotFoundException("Adherent not found"));
-        assertThrows(AdherentNotFoundException.class, () -> adherentService.createAdherent(adherentExistant));
+        when(adherentService.createAdherent(any(Adherent.class))).thenThrow(new QuotaLivreDepasseException("Adherent not found"));
+        assertThrows(QuotaLivreDepasseException.class, () -> adherentService.createAdherent(adherentExistant));
         
     }
 
@@ -88,7 +88,7 @@ public class AdherentTest {
     void testReadAdherentNotFound() {
         when(adherentRepository.findById(any(String.class))).thenReturn(Optional.empty());
 
-        assertThrows(AdherentNotFoundException.class, () -> adherentService.getAdherentById("non-existent-id"));
+        assertThrows(QuotaLivreDepasseException.class, () -> adherentService.getAdherentById("non-existent-id"));
         verify(adherentRepository, times(1)).findById("non-existent-id");
     }
 
@@ -110,13 +110,12 @@ public class AdherentTest {
     void testUpdateAdherentNotFound() {
         when(adherentRepository.findById(any(String.class))).thenReturn(Optional.empty());
 
-        assertThrows(AdherentNotFoundException.class, () -> adherentService.updateAdherent("non-existent-id", adherentExistant));
+        assertThrows(QuotaLivreDepasseException.class, () -> adherentService.updateAdherent("non-existent-id", adherentExistant));
         verify(adherentRepository, times(1)).findById("non-existent-id");
     }
 
     @Test
     void testDeleteAdherent() {
-        // when(adherentRepository.findById(any(String.class))).thenReturn(Optional.of(adherentExistant));
         doNothing().when(adherentRepository).delete(adherentExistant);
 
         assertDoesNotThrow(() -> adherentService.deleteAdherent(adherentExistant));

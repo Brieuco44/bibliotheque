@@ -4,5 +4,4 @@ public class AdherentNotFoundException extends RuntimeException{
     public AdherentNotFoundException(String message) {
         super(message);
     }
-
 }
